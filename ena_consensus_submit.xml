@@ -40,7 +40,9 @@ mkdir fasta;
 echo -e "ASSEMBLY_TYPE\t$assembly_type" >> $manifest_base;
 echo -e "COVERAGE\t$coverage" >> $manifest_base;
 echo -e "PROGRAM\t$assembly_program" >> $manifest_base;
-echo -e "MINGAPLENGTH\t$min_gap_length" >> $manifest_base;
+#if $min_gap_length:
+    echo -e "MINGAPLENGTH\t$min_gap_length" >> $manifest_base;
+#end if
 echo -e "MOLECULETYPE\t$molecule_type" >> $manifest_base;
         
 #if $metadata_file_or_form.metadata_format == "file":
@@ -122,7 +124,6 @@ echo -e "MOLECULETYPE\t$molecule_type" >> $manifest_base;
         <option value="viral cRNA">viral cRNA</option>
         <option value="genomic DNA">genomic DNA</option>
     </param>
-    <param name="min_gap_length" type="text" optional="True" label="Minimum gap length"/>
     <param name="coverage" type="float" optional="False" value="10000" label="Coverage"/>
     <conditional name="metadata_file_or_form">
         <param name="metadata_format" type="select" label="Select the method to load study and sample metadata">
@@ -141,6 +142,7 @@ echo -e "MOLECULETYPE\t$molecule_type" >> $manifest_base;
             <param name="center_name" type="text" optional="False" label="Center name"/>
         </when>
     </conditional>
+    <param name="min_gap_length" type="text" optional="True" label="Minimum gap length (optional)"/>
     </inputs>
     <outputs>
         <collection name="generated_manifests" type="list" label="Generated manifests">
