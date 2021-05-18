@@ -1,5 +1,7 @@
+import gzip
 import os
 import sys
+import shutil
 import yaml
 
 from Bio import SeqIO
@@ -49,6 +51,7 @@ def main():
         exp_alias = None
         for index,run in yaml_only['ENA_run'].items():
             if run['file_name'] == seq_id:
+                ## TODO: match also cases when the seq entry name is == entry_[1|2].fastq.gz or something
                 exp_alias = run['experiment_alias']
                 break
         if not exp_alias:
@@ -60,6 +63,7 @@ def main():
             if exp['alias'] == exp_alias:
                 sample_alias = exp['sample_alias']
                 study_alias = exp['study_alias']
+                platform = exp['platform']
                 break
         if not sample_alias:
             raise Exception("No sample associated with experiment {exp_alias}")
@@ -71,6 +75,11 @@ def main():
         fasta_path = os.path.join(out_fasta_base, seq_id + '.fasta')
         with open(fasta_path, "w") as output_handle:
             SeqIO.write([record], output_handle, "fasta")
+        #gzip the file (required by ENA upload tool)
+        fasta_path_gz = fasta_path + '.gz'
+        with open(fasta_path, 'rb') as f_in:
+            with gzip.open(fasta_path_gz, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
         # create the manifest
         # add to the manifest the: 
         # 
@@ -81,8 +90,10 @@ def main():
             with open(manifest_template) as m_template:
                 output_handle.write(m_template.read())
             output_handle.write("ASSEMBLYNAME\tconsensus_" + seq_id + "\n")
+            output_handle.write("PLATFORM\t" + platform + "\n")
             output_handle.write("STUDY\t" + study_alias + "\n")
             output_handle.write("SAMPLE\t" + sample_alias + "\n")
+            output_handle.write("FASTA\t" + fasta_path_gz + "\n")
 
         # ... and a dict  (or tuple list???) that contains for each study - sample  the name of the file that has the consensus sequence
         # ****  is it ok to use the unique ids of the study and sample in the manifest?? or should I use the accessions??
