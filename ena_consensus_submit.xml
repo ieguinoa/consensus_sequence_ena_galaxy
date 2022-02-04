@@ -159,8 +159,6 @@ tar -cf $webin_cli_outputs $outputs_dir;
     </inputs>
     <outputs>
         <collection name="generated_manifests" type="list" label="Generated manifests">
-            <!--<discover_datasets pattern="__name_and_ext__" directory="manifests" />-->
-            <!--<discover_datasets pattern="(?P&lt;designation&gt;.+)\.manifest\.txt$" ext="txt" directory="manifests" />-->
             <discover_datasets pattern="(?P&lt;designation&gt;.+)\.txt" ext="txt" directory="manifests/"/>
         </collection>
         <data name="webin_cli_log" label="ENA submission log" format="txt"/>
