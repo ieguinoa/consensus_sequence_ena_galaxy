@@ -85,7 +85,7 @@ mkdir $outputs_dir;
         #end if
         -outputDir $outputs_dir
         >> $webin_cli_log ;
-    done < submit_list.tab
+    done < submit_list.tab;
 
 #else:
     gzip -c $genome_fasta > consensus.fasta.gz;
