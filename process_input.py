@@ -69,10 +69,12 @@ def load_receipt_data(input_file_path):
 
 """
 Takes as input:
-    1. A receipt obtained from ENA submission tool: a txt file that contains sections describing submission details: "Study accession details, "Sample accession details" ..
+    1. A receipt obtained from ENA submission tool: 
+        a txt file that contains sections describing submission details.
     2. A json file with the list of fasta that the user loaded
     3. Path to write generated manifests
-    4. manifest template path: the manifest with the global values set (e.g COVERAGE, MINGAPLENGHT..)
+    4. Manifest template path: the manifest with the global values set 
+        (e.g COVERAGE, MINGAPLENGHT..)
 """
 
 
@@ -86,12 +88,14 @@ def main():
     data_dict = load_receipt_data(input_file_path)
     # iterate over the list of fasta files
     with open(fasta_names_list_path, 'r') as fasta_files_json_file:
-        fasta_files_dict = json.load(fasta_files_json_file)
+        fasta_files_list = json.load(fasta_files_json_file)
     with open('submit_list.tab', 'w') as written_manifests_out:
-        for fasta_file in fasta_files_dict:
-            sample_alias = fasta_file[:-9]
+        for fasta_file in fasta_files_list:
+            if fasta_file.endswith('.fasta.gz'):
+                sample_alias = fasta_file[:-9]
+            else:
+                sample_alias = fasta_file[:-6]
             print(f'processing {sample_alias}')
-            # find info from a 
             found_metadata = False
             for study_alias in data_dict.keys():
                 if sample_alias in data_dict[study_alias].keys():
@@ -109,16 +113,14 @@ def main():
                         output_handle.write("PLATFORM\t" + platform + "\n")
                         output_handle.write("STUDY\t" + study_accession + "\n")
                         output_handle.write("SAMPLE\t" + sample_accession + "\n")
+                        # files should be available in the corresponding dir and named:
+                        #  sample_alias.fasta.gz 
                         output_handle.write("FASTA\t" + sample_alias + '.fasta.gz' + "\n")
                     found_metadata = True
                     written_manifests_out.write(manifest_path + '\n')
                     break
             if not found_metadata:
                 print(f'No metadata found for sample {sample_alias}')
-    # fasta_files_list = json.loads(open(fasta_names_list_path))
-    # for fasta_file in fasta_files_list:
-        # print(fasta_file)
-
 
 
 if __name__ == '__main__':
