@@ -51,8 +51,12 @@ echo -e 'PROGRAM\t$assembly_program' >> $manifest_base;
 echo -e 'MOLECULETYPE\t$molecule_type' >> $manifest_base;
         
 #if $metadata_file_or_form.metadata_format == "file":
+    #import re
+    #for $file in $metadata_file_or_form.genome_fasta:
+        ln -s $file './fasta/$file.element_identifier';
+    #end for
     ## process the input tables, this creates an intermediate file with information
-    python3 '$__tool_directory__/process_input.py' $metadata_file_or_form.ena_receipt $genome_fasta './manifests' './fasta' $manifest_base;
+    python3 '$__tool_directory__/process_input.py' $metadata_file_or_form.ena_receipt $genome_fasta_files './manifests' $manifest_base;
     center_name=`grep 'center_name' $metadata_file_or_form.ena_receipt | cut -f2,2 | tr -d '\n'`;
 #else:
     #set $generated_manifest='./manifests/generated_manifest.txt'
@@ -73,6 +77,7 @@ mkdir $outputs_dir;
     ## in case of errors, this list is empty
     while read line; do
         manifest=`echo \$line | cut -d' ' -f1,1`;
+        echo "Submitting manifest \$manifest";
         ena-webin-cli
         -context genome
         -userName "'\$webin_id'"
@@ -84,11 +89,11 @@ mkdir $outputs_dir;
             -validate
         #end if
         -outputDir $outputs_dir
-        >> $webin_cli_log ;
+        >> $webin_cli_log;
     done < submit_list.tab;
 
 #else:
-    gzip -c $genome_fasta > consensus.fasta.gz;
+    gzip -c $metadata_file_or_form.genome_fasta > consensus.fasta.gz;
     echo -e 'FASTA\tconsensus.fasta.gz' >> $generated_manifest;
     ena-webin-cli
     #if $submit_test == "true":
@@ -109,7 +114,7 @@ mkdir $outputs_dir;
     >> $webin_cli_log ;
     ##cp ./genome/$metadata_file_or_form.assembly_name/validate/webin-cli.report $validate_output
 #end if
-tar -cf $webin_cli_outputs $outputs_dir;
+tar -cf $webin_cli_outputs $outputs_dir ;
 ]]></command>
     <configfiles>
         <configfile name="credentials"><![CDATA[
@@ -121,12 +126,22 @@ tar -cf $webin_cli_outputs $outputs_dir;
 #end if
 
         ]]></configfile>
+    <configfile name="genome_fasta_files">
+#import json
+#import re
+#if $metadata_file_or_form.metadata_format == "file":
+    #set $fasta_files_list = list()
+    #for $file in $metadata_file_or_form.genome_fasta:
+        $fasta_files_list.append(str($file.element_identifier))
+    #end for
+    #echo json.dumps($fasta_files_list)
+#end if
+        </configfile>
     </configfiles>
 <inputs>
     <param name="test_submit" type="hidden" value="False" />
     <param name="submit_test" type="boolean" truevalue="true" falsevalue="false" label="Submit to test server" help="use Webin test service instead of the production service. Please note that the Webin upload area is shared between test and production services, and that test submission files will not be archived." />
     <param name="dry_run" type="boolean" truevalue="true" falsevalue="false" label="Validate files and metadata but do not submit" help="Generate input files and run Webin-CLI with -validate option. If 'No' is selected then it will validate and submit (-submit flag)"/>
-    <param name="genome_fasta" type="data" label="Select the consensus sequence assembly file" format="fasta"/>
     <param name="assembly_type" type="select" label="Assembly type">
         <option value="clone">Clone</option>
         <option value="isolate">Isolate</option>
@@ -145,6 +160,7 @@ tar -cf $webin_cli_outputs $outputs_dir;
         </param>
         <when value="file">
             <param type="data" format="txt" name="ena_receipt" label="Submission receipt obtained from ENA upload tool"/>
+            <param name="genome_fasta" type="data" label="Select the consensus sequence assembly file" format="fasta.gz" multiple="true"/>
         </when>
         <when value="form">
             <param name="assembly_name" type="text" optional="False" label="Assembly name"/>
@@ -153,6 +169,7 @@ tar -cf $webin_cli_outputs $outputs_dir;
             <param name="sequencing_platform" type="text" optional="False" label="Sequencing platform"/>
             <param name="description" type="text" optional="True" value="" label="Description" help="Free text description of the genome assembly (optional)"/>
             <param name="center_name" type="text" optional="False" label="Center name"/>
+            <param name="genome_fasta" type="data" label="Select the consensus sequence assembly file" format="fasta"/>
         </when>
     </conditional>
     <param name="min_gap_length" type="text" optional="True" label="Minimum gap length (optional)"/>
@@ -170,7 +187,6 @@ tar -cf $webin_cli_outputs $outputs_dir;
             <param name="submit_test" value="true" />
             <param name="dry_run" value="true" />
             <param name="test_submit" value="True" />
-            <param name="genome_fasta" value="phiX2.fasta"/>
             <param name="assembly_type" value="isolate"/>
             <param name="assembly_program" value="Test assembly program"/>
             <param name="molecule_type" value="viral cRNA"/>
@@ -183,12 +199,51 @@ tar -cf $webin_cli_outputs $outputs_dir;
                 <param name="sequencing_platform" value="Nanopore 0011"/>
                 <param name="description" value="Test Description"/>
                 <param name="center_name" value="Test center name"/>
+                <param name="genome_fasta" value="phiX2.fasta"/>
             </conditional>
             <param name="min_gap_length" value="30"/>
             <output name="webin_cli_log">
                 <assert_contents>
                     <has_n_lines n="4"/>
                     <has_text_matching expression="ERROR: Invalid submission account user name or password."/>
+                </assert_contents>
+            </output>
+        </test>
+        <test>
+            <param name="submit_test" value="true" />
+            <param name="dry_run" value="true" />
+            <param name="test_submit" value="True" />
+            <param name="assembly_type" value="isolate"/>
+            <param name="assembly_program" value="Test assembly program"/>
+            <param name="molecule_type" value="viral cRNA"/>
+            <param name="coverage" value="10000"/>
+            <conditional name="metadata_file_or_form">
+                <param name="metadata_format" value="file"/>
+                <param name="ena_receipt" value="receipt_sample.txt"/>
+                <param name="genome_fasta" value="phiX2.fasta.gz"/>
+            </conditional>
+            <param name="min_gap_length" value="30"/>
+            <assert_stdout>
+                <has_text_matching expression="No metadata found for sample phiX2"/>
+            </assert_stdout>
+        </test>
+        <test>
+            <param name="submit_test" value="true" />
+            <param name="dry_run" value="true" />
+            <param name="test_submit" value="True" />
+            <param name="assembly_type" value="isolate"/>
+            <param name="assembly_program" value="Test assembly program"/>
+            <param name="molecule_type" value="viral cRNA"/>
+            <param name="coverage" value="10000"/>
+            <conditional name="metadata_file_or_form">
+                <param name="metadata_format" value="file"/>
+                <param name="ena_receipt" value="receipt_sample.txt"/>
+                <param name="genome_fasta" value="sample_alias_001.fasta.gz"/>
+            </conditional>
+            <param name="min_gap_length" value="30"/>
+            <output name="webin_cli_log">
+                <assert_contents>
+                    <has_text_matching expression="ERROR: Invalid submission account user name or password. Please try enclosing your password in single quotes."/>
                 </assert_contents>
             </output>
         </test>
