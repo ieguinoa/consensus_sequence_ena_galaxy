@@ -15,21 +15,6 @@ ENA_experiment:
     sample_alias: sample_alias_001
     study_alias: study_alias_001
     title: Illumina NextSeq paired end sequencing; Illumina COVIDSeq Test
-  1:
-    alias: exp_test_alias_002
-    design_description: Lot's of coffe and magic
-    insert_size: 250.0
-    instrument_model: NextSeq 500
-    library_construction_protocol: Illumina COVIDSeq Test Kit
-    library_layout: PAIRED
-    library_name: Cov51
-    library_selection: RT-PCR
-    library_source: VIRAL RNA
-    library_strategy: AMPLICON
-    platform: ILLUMINA
-    sample_alias: phiX2
-    study_alias: study_alias_001
-    title: Illumina NextSeq paired end sequencing; Illumina COVIDSeq Test
 ENA_run:
   2:
     alias: run_alias_001
@@ -39,12 +24,6 @@ ENA_run:
 ENA_sample:
   2:
     alias: sample_alias_001
-    collecting institution: Umbrella Corp.
-    collection date: '2021-05-03'
-    collector name: "John Doe"
-    definition for seropositive sample: ''
-  2:
-    alias: phiX2
     collecting institution: Umbrella Corp.
     collection date: '2021-05-03'
     collector name: "John Doe"
@@ -66,7 +45,6 @@ study_alias_001	FAKE0001	2011-01-16T10:52:06.497+01:00	added
 
 Sample accession details:
 sample_alias_001	FAKESAMP001	2011-01-16T10:52:06.497+01:00	added
-phiX2	FAKESAMP002	2011-01-16T10:52:06.497+01:00	added
 
 Saving updates in new tsv tables::
 save updates in ./submission_files/studies_updated.tsv
