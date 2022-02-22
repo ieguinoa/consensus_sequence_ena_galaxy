@@ -95,7 +95,7 @@ def main():
                 sample_alias = fasta_file[:-9]
             else:
                 sample_alias = fasta_file[:-6]
-            print(f'processing {sample_alias}')
+            print(f'Processing {sample_alias}')
             found_metadata = False
             for study_alias in data_dict.keys():
                 if sample_alias in data_dict[study_alias].keys():
